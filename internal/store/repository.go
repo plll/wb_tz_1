@@ -2,13 +2,18 @@ package store
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
 	"github.com/plll/wb_tz_1/internal/datastruct"
 )
 
 type Orders interface {
 	AddNewOrder(ctx context.Context, order datastruct.Order) (string, error)
 	GetOrderById() string
-	CollectOrderById(ctx context.Context, orderId string) (datastruct.Order, error)
+	CollectOrderById(ctx context.Context,
+		itemRepository *ItemsRepository,
+		paymentRepository *PaymentsRepository,
+		deliveryRepository *DeliveriesRepository,
+		orderId string) (datastruct.Order, error)
 }
 
 type Deliveries interface {

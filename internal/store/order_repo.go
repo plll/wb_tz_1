@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
 	"github.com/plll/wb_tz_1/internal/datastruct"
 )
 
@@ -29,11 +30,11 @@ func (o *OrdersRepository) CollectOrderById(ctx context.Context,
 	deliveryRepository *DeliveriesRepository,
 	orderId string) (datastract.Order, error) {
 	var order Order
-	tx, err := s.db.Begin(s.ctx)
+	tx, err := o.db.Begin(ctx)
 	if err != nil {
 		return order, err
 	}
-	defer tx.Rollback(s.ctx)
+	defer tx.Rollback(ctx)
 	var p Payment
 	err = tx.QueryRow(ctx, paymentRepository.GetPaymentByOrderId(), orderId).Scan(&p.Transaction,
 		&p.RequestId, &p.Currency, &p.Amount,
@@ -73,7 +74,7 @@ func (o *OrdersRepository) CollectOrderById(ctx context.Context,
 	return order, nil
 }
 
-func (s *OrdersRepository) AddNewOrder(ctx context.Context, order datastruct.Orders) string {
+func (s *OrdersRepository) AddNewOrder(ctx context.Context, order datastruct.Orders) (string, err) {
 	query := s.db.Rebind(`
 		SELECT 
 			s.id as session_id, s.token as token, u.id as user_id, 
