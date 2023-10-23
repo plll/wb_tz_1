@@ -1,5 +1,7 @@
 package store
 
+import "github.com/jackc/pgx/v4"
+
 type PaymentsRepository struct {
 	db *pgx.Conn
 }

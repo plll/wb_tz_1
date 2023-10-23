@@ -7,13 +7,23 @@ import (
 )
 
 type Orders interface {
-	AddNewOrder(ctx context.Context, order datastruct.Order) (string, error)
 	GetOrderById() string
+	AddNewOrder(ctx context.Context,
+		itemRepository *ItemsRepository,
+		paymentRepository *PaymentsRepository,
+		deliveryRepository *DeliveriesRepository,
+		orderItemRepository OrderItemsRepository,
+		order datastruct.Order) error
 	CollectOrderById(ctx context.Context,
 		itemRepository *ItemsRepository,
 		paymentRepository *PaymentsRepository,
 		deliveryRepository *DeliveriesRepository,
 		orderId string) (datastruct.Order, error)
+	GetNLastOrders(ctx context.Context,
+		itemRepository *ItemsRepository,
+		paymentRepository *PaymentsRepository,
+		deliveryRepository *DeliveriesRepository,
+		n int) ([]datastruct.Order, error)
 }
 
 type Deliveries interface {
@@ -24,6 +34,10 @@ type Deliveries interface {
 type Items interface {
 	AddItem() string
 	GetAllItemsByOrderId() string
+}
+
+type OrdersItems interface {
+	AddOrderItem() string
 }
 
 type Payments interface {
@@ -40,9 +54,10 @@ type Repositories struct {
 
 func NewRepositories(db *pgx.Conn) *Repositories {
 	return &Repositories{
-		Deliveries: NewDeliveriesRepository(db),
-		Payments:   NewPaymentsRepository(db),
-		Orders:     NewOrdersRepository(db),
-		Items:      NewItemsRepository(db),
+		Deliveries:  NewDeliveriesRepository(db),
+		Payments:    NewPaymentsRepository(db),
+		Orders:      NewOrdersRepository(db),
+		Items:       NewItemsRepository(db),
+		OrdersItems: NewOrderItemsRepository(db),
 	}
 }

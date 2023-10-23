@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/jackc/pgx/v4"
+	"github.com/nats-io/stan.go"
 	"github.com/plll/wb_tz_1/internal/store"
 	"net/http"
 )
@@ -31,15 +33,19 @@ func NewServer(
 		server: server,
 		cache:  cache,
 		sc:     sc,
-		repos:  store.Repositories,
+		repos:  repos,
 	}
 }
 
 func (s *Server) Init() {
 	mux := http.NewServeMux()
-	mux.Handle("/orders", s.ordersHandler)
+	mux.HandleFunc("/orders", s.ordersHandler)
+
+	go s.createSubscriber()
 
 	s.server.Handler = mux
+
+	s.prepareCache()
 }
 
 func (s *Server) Run(ctx context.Context) {

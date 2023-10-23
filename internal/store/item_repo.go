@@ -1,5 +1,9 @@
 package store
 
+import (
+	"github.com/jackc/pgx/v4"
+)
+
 type ItemsRepository struct {
 	db *pgx.Conn
 }
