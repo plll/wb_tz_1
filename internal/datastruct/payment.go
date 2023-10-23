@@ -1,5 +1,9 @@
 package datastruct
 
+import (
+	"errors"
+)
+
 type Payment struct {
 	Transaction  string `json:"transaction"`
 	RequestId    string `json:"request_id"`
@@ -11,4 +15,23 @@ type Payment struct {
 	DeliveryCost int    `json:"delivery_cost"`
 	GoodsTotal   int    `json:"goods_total"`
 	CustomFee    int    `json:"custom_fee"`
+}
+
+func (p Payment) Validate() error {
+	if p.Transaction == "" {
+		return errors.New("No Transaction")
+	}
+	if p.RequestId == "" {
+		return errors.New("No RequestId")
+	}
+	if p.Currency == "" {
+		return errors.New("No Currency")
+	}
+	if p.Provider == "" {
+		return errors.New("No Provider")
+	}
+	if p.Bank == "" {
+		return errors.New("No Bank")
+	}
+	return nil
 }

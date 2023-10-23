@@ -3,32 +3,32 @@ package store
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/plll/wb_tz_1/internal/datastruct"
 )
 
 type OrdersRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewOrdersRepository(db *pgx.Conn) Orders {
+func NewOrdersRepository(db *pgxpool.Pool) Orders {
 	return &OrdersRepository{
 		db: db,
 	}
 }
 
 func (o *OrdersRepository) GetOrderById() string {
-	query := `(SELECT order_uid, entry, locale, internal_signature, customer_id,
+	query := `SELECT order_uid, entry, locale, internal_signature, customer_id,
 		       delivery_service, shardkey, sm_id, date_created, oof_shard, track_number
 	           FROM orders
-	           WHERE order_uid = $1)`
+	           WHERE order_uid = $1`
 	return query
 }
 
 func (o *OrdersRepository) CollectOrderById(ctx context.Context,
-	itemRepository *ItemsRepository,
-	paymentRepository *PaymentsRepository,
-	deliveryRepository *DeliveriesRepository,
+	itemRepository Items,
+	paymentRepository Payments,
+	deliveryRepository Deliveries,
 	orderId string) (datastruct.Order, error) {
 	var order datastruct.Order
 	tx, err := o.db.Begin(ctx)
@@ -76,20 +76,20 @@ func (o *OrdersRepository) CollectOrderById(ctx context.Context,
 }
 
 func (o *OrdersRepository) AddNewOrderInfo() string {
-	query := `(INSERT INTO orders (order_uid, entry, delivery, 
+	query := `INSERT INTO orders (order_uid, entry, delivery, 
 	                                        payment, locale, internal_signature,
 											customer_id, delivery_service, shardkey,
 											sm_id, date_created, oof_shard, track_number )
                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-						RETURNING order_uid)`
+						RETURNING order_uid`
 	return query
 }
 
 func (o *OrdersRepository) AddNewOrder(ctx context.Context,
-	itemRepository *ItemsRepository,
-	paymentRepository *PaymentsRepository,
-	deliveryRepository *DeliveriesRepository,
-	orderItemRepository OrderItemsRepository,
+	itemRepository Items,
+	paymentRepository Payments,
+	deliveryRepository Deliveries,
+	orderItemRepository OrdersItems,
 	order datastruct.Order) error {
 	p := order.Payment
 	d := order.Delivery
@@ -156,13 +156,13 @@ func (o *OrdersRepository) AddNewOrder(ctx context.Context,
 }
 
 func (o *OrdersRepository) GetNLastOrders(ctx context.Context,
-	itemRepository *ItemsRepository,
-	paymentRepository *PaymentsRepository,
-	deliveryRepository *DeliveriesRepository,
+	itemRepository Items,
+	paymentRepository Payments,
+	deliveryRepository Deliveries,
 	n int) ([]datastruct.Order, error) {
 	var orders []datastruct.Order
-	query := `(SELECT order_uid FROM orders
-               LIMIT $1)`
+	query := `SELECT order_uid FROM orders
+               LIMIT $1`
 	rows, err := o.db.Query(ctx, query, n)
 	if err != nil {
 		return orders, err

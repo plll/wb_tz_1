@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -21,18 +22,22 @@ func (s *Server) ordersHandler(res http.ResponseWriter, req *http.Request) {
 		orderId := req.FormValue("orderId")
 		value, ok := s.cache.Get(orderId)
 		if ok {
+			fmt.Println(2)
 			j, _ := json.Marshal(&value)
 			res.Write(j)
 			return
 		}
-		order, err := s.repos.OrderRepository.CollectOrderById(s.ctx,
+		order, err := s.repos.Orders.CollectOrderById(s.ctx,
 			s.repos.Items,
 			s.repos.Payments,
 			s.repos.Deliveries,
 			orderId)
+		if order.OrderUid == "" {
+			res.Write([]byte("No such order"))
+			return
+		}
 		if err != nil {
-			fmt.Print(err)
-			res.WriteHeader(http.StatusBadRequest)
+			log.Fatal(err)
 		}
 		j, _ := json.Marshal(&order)
 		res.Write(j)
